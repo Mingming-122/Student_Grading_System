@@ -1,30 +1,38 @@
 {
-  "student_name": "yasmien",
-  "school_year": "3a",
+  "student_name": "dfg",
+  "school_year": "2026-2027",
   "semester": "1st",
   "results": {
     "subjects": [
       {
-        "name": "Mobile programming",
+        "name": "gdgfhdgfs",
         "units": 3.0,
-        "numeric_grade": 87.64,
-        "gpa_point": 1.75,
-        "letter_grade": "B+",
-        "quality_pts": 5.25
+        "num_grade": 73.0,
+        "gpa_point": 2.5,
+        "letter_grade": "C+",
+        "quality_pts": 7.5
       },
       {
-        "name": "programming language",
+        "name": "gh",
         "units": 3.0,
-        "numeric_grade": 86.34,
+        "num_grade": 84.0,
+        "gpa_point": 2.0,
+        "letter_grade": "B",
+        "quality_pts": 6.0
+      },
+      {
+        "name": "htyhjm",
+        "units": 3.0,
+        "num_grade": 87.0,
         "gpa_point": 1.75,
         "letter_grade": "B+",
         "quality_pts": 5.25
       }
     ],
-    "total_units": 6.0,
-    "total_quality_pts": 10.5,
-    "overall_gpa": 1.75,
-    "overall_letter": "B+",
-    "standing": "HONORS"
+    "total_units": 9.0,
+    "total_quality_pts": 18.75,
+    "overall_gpa": 2.0833,
+    "overall_letter": "B",
+    "standing": "PASSED"
   }
 }

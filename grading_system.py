@@ -2,16 +2,8 @@
 ========================================================
   STUDENT GRADING AND GPA SYSTEM
   Language 1: Python (Procedural Computation Engine)
-  
-  Responsibilities:
-  - Accept student and subject data as input
-  - Compute weighted grade per subject
-  - Compute overall weighted average (GPA)
-  - Determine letter grade and academic standing
-  - Output results to 'report_data.json' for the JS dashboard
 ========================================================
 """
-
 import json
 import os
 
@@ -19,7 +11,6 @@ import os
 # CONSTANTS: Grading Scale and Thresholds
 # ----------------------------------------------------------
 
-# Philippine University-style GPA scale (1.0 is highest, 5.0 is failing)
 GRADE_SCALE = [
     (97, 100, 1.00, "A+"),
     (93,  96, 1.25, "A" ),
@@ -33,7 +24,7 @@ GRADE_SCALE = [
     ( 0,  64, 5.00, "F" ),
 ]
 
-HONORS_THRESHOLD  = 1.75   # GPA <= 1.75  → Latin Honors
+DL_THRESHOLD  = 1.75   # GPA <= 1.75  → Deans List
 PASSED_THRESHOLD  = 3.00   # GPA <= 3.00  → Passed
 # GPA > 3.00 or any 5.00 → Failed
 
@@ -51,16 +42,7 @@ def get_gpa_and_letter(numeric_grade):
 
 
 def compute_weighted_average(subjects):
-    """
-    Compute the overall weighted average GPA.
-
-    subjects: list of dicts with keys:
-        - name  (str)
-        - units (int/float)
-        - grade (float, 0-100 numeric)
-
-    Returns a dict with per-subject details and overall results.
-    """
+    
     total_units        = 0.0
     total_quality_pts  = 0.0
     subject_results    = []
@@ -104,8 +86,8 @@ def compute_weighted_average(subjects):
     # Academic standing
     if has_failing_subject or overall_gpa > PASSED_THRESHOLD:
         standing = "FAILED"
-    elif overall_gpa <= HONORS_THRESHOLD:
-        standing = "HONORS"
+    elif overall_gpa <= DL_THRESHOLD:
+        standing = "DEANS LIST"
     else:
         standing = "PASSED"
 
