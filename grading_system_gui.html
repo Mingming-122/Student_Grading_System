@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Grading and GPA System</title>
+  <style>
+    /* ============================================================
+       Plain, minimal styling — no frameworks
+    ============================================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 14px;
+      background: #fff;
+      color: #111;
+      padding: 30px 40px;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+
+    h1 { font-size: 17px; text-transform: uppercase; letter-spacing: 2px; }
+    h2 { font-size: 12px; font-weight: normal; color: #555; margin-top: 3px; margin-bottom: 20px; }
+
+    hr { border: none; border-top: 1px solid #111; margin: 14px 0; }
+    hr.double { border-top: 3px double #111; }
+
+    /* ---- Form labels + inputs ---- */
+    .field-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+    .field       { display: flex; align-items: center; gap: 10px; }
+    .field label { width: 130px; flex-shrink: 0; font-weight: bold; }
+    .field input {
+      border: 1px solid #aaa;
+      padding: 4px 8px;
+      font-family: inherit;
+      font-size: 13px;
+      width: 260px;
+    }
+    .field input:focus { outline: 2px solid #111; }
+
+    /* ---- Subjects table ---- */
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    thead th {
+      text-align: left;
+      border-bottom: 1px solid #111;
+      padding: 5px 6px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+    tbody td { padding: 4px 6px; }
+    tbody td input {
+      border: 1px solid #bbb;
+      padding: 3px 6px;
+      font-family: inherit;
+      font-size: 13px;
+      width: 100%;
+    }
+    tbody td input:focus { outline: 2px solid #111; }
+    tbody tr:nth-child(even) { background: #f8f8f8; }
+
+    .col-no    { width: 36px; }
+    .col-name  { }
+    .col-units { width: 70px; }
+    .col-grade { width: 100px; }
+    .col-del   { width: 36px; text-align: center; }
+
+    /* ---- Buttons ---- */
+    button {
+      font-family: inherit;
+      font-size: 13px;
+      padding: 5px 14px;
+      border: 1px solid #111;
+      background: #fff;
+      cursor: pointer;
+    }
+    button:hover { background: #111; color: #fff; }
+    button.primary { background: #111; color: #fff; }
+    button.primary:hover { background: #444; }
+    button.danger  { border-color: #aaa; color: #aaa; padding: 2px 8px; }
+    button.danger:hover { background: #c00; color: #fff; border-color: #c00; }
+
+    .btn-row { display: flex; gap: 10px; align-items: center; margin-top: 8px; }
+
+    /* ---- Report card output ---- */
+    #report-section { margin-top: 28px; display: none; }
+
+    .report-pre {
+      white-space: pre;
+      font-family: "Courier New", Courier, monospace;
+      font-size: 13px;
+      line-height: 1.55;
+      border: 1px solid #111;
+      padding: 16px 20px;
+      background: #fafafa;
+      overflow-x: auto;
+    }
+
+    .standing-line {
+      display: inline-block;
+      margin-top: 14px;
+      border: 2px solid #111;
+      padding: 8px 22px;
+      font-size: 15px;
+      font-weight: bold;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .footer-note {
+      margin-top: 10px;
+      font-size: 11px;
+      color: #888;
+    }
+
+    /* ---- Error messages ---- */
+    .error { color: #c00; font-size: 13px; margin-top: 6px; display: none; }
+
+    /* ---- GPA Reference table ---- */
+    .ref-table { width: 280px; }
+    .ref-table td, .ref-table th { padding: 3px 8px; font-size: 12px; }
+    .ref-table td:not(:first-child), .ref-table th:not(:first-child) { text-align: right; }
+  </style>
+</head>
+<body>
+
+  <!-- ============================================================
+       STUDENT GRADING AND GPA SYSTEM
+       JavaScript GUI Version
+
+       Computation logic (ported from grading_system.js / Python):
+         - getGpaAndLetter()         → maps 0-100 grade to GPA + letter
+         - gpaToNumeric()            → reverse maps GPA to numeric midpoint
+         - computeWeightedAverage()  → weighted GPA, standing, quality pts
+       GUI logic:
+         - addSubjectRow()           → dynamic table row injection
+         - removeSubjectRow()        → row removal
+         - collectInputs()           → reads and validates the form
+         - renderReport()            → builds the plain-text report card
+         - downloadJson()            → saves report_data.json to disk
+  ============================================================ -->
+
+  <h1>Student Grading and GPA System</h1>
+  <h2>JavaScript GUI &mdash; computation identical to the Python and Node.js versions</h2>
+  <hr class="double" />
+
+  <!-- ---- Student Info ---- -->
+  <section>
+    <strong>Student Information</strong>
+    <hr />
+    <div class="field-group" style="margin-top:10px">
+      <div class="field">
+        <label for="studentName">Student Name</label>
+        <input id="studentName" type="text" placeholder="e.g. Juan dela Cruz" />
+      </div>
+      <div class="field">
+        <label for="schoolYear">School Year</label>
+        <input id="schoolYear" type="text" placeholder="e.g. 2025-2026" />
+      </div>
+      <div class="field">
+        <label for="semester">Semester</label>
+        <input id="semester"   type="text" placeholder="e.g. 1st Semester" />
+      </div>
+    </div>
+  </section>
+
+  <!-- ---- Subjects ---- -->
+  <section style="margin-top:16px">
+    <strong>Subjects</strong>
+    <hr />
+    <table id="subjectTable">
+      <thead>
+        <tr>
+          <th class="col-no">#</th>
+          <th class="col-name">Subject Name</th>
+          <th class="col-units">Units</th>
+          <th class="col-grade">Grade (0&ndash;100)</th>
+          <th class="col-del"></th>
+        </tr>
+      </thead>
+      <tbody id="subjectBody">
+        <!-- rows injected by JS -->
+      </tbody>
+    </table>
+
+    <div class="btn-row">
+      <button onclick="addSubjectRow()">+ Add Subject</button>
+      <span id="subjectError" class="error">Add at least one subject.</span>
+    </div>
+  </section>
+
+  <!-- ---- Actions ---- -->
+  <section style="margin-top:20px">
+    <div class="btn-row">
+      <button class="primary" onclick="compute()">Compute GPA</button>
+      <button onclick="resetForm()">Reset</button>
+    </div>
+    <div id="formError" class="error">Please fill in all required fields.</div>
+  </section>
+
+  <!-- ---- Report Card Output ---- -->
+  <section id="report-section">
+    <hr class="double" style="margin-top:28px" />
+    <strong>Grade Computation Report</strong>
+    <hr />
+    <div id="reportPre" class="report-pre"></div>
+    <div id="standingBox" class="standing-line"></div>
+    <div class="footer-note" id="reportFooter"></div>
+
+    <div class="btn-row" style="margin-top:14px">
+      <button onclick="downloadJson()">Download report_data.json</button>
+      <button onclick="printReport()">Print</button>
+    </div>
+
+    <hr style="margin-top:28px" />
+    <strong>GPA Scale Reference</strong>
+    <table class="ref-table" style="margin-top:8px">
+      <thead><tr><th>Numeric Range</th><th>GPA Point</th><th>Letter</th></tr></thead>
+      <tbody>
+        <tr><td>97 &ndash; 100</td><td>1.00</td><td>A+</td></tr>
+        <tr><td>93 &ndash; 96</td> <td>1.25</td><td>A</td></tr>
+        <tr><td>89 &ndash; 92</td> <td>1.50</td><td>A-</td></tr>
+        <tr><td>85 &ndash; 88</td> <td>1.75</td><td>B+</td></tr>
+        <tr><td>81 &ndash; 84</td> <td>2.00</td><td>B</td></tr>
+        <tr><td>77 &ndash; 80</td> <td>2.25</td><td>B-</td></tr>
+        <tr><td>73 &ndash; 76</td> <td>2.50</td><td>C+</td></tr>
+        <tr><td>69 &ndash; 72</td> <td>2.75</td><td>C</td></tr>
+        <tr><td>65 &ndash; 68</td> <td>3.00</td><td>D</td></tr>
+        <tr><td>0 &ndash; 64</td>  <td>5.00</td><td>F</td></tr>
+      </tbody>
+    </table>
+    <p style="font-size:12px; color:#555; margin-top:8px">
+      Honors: GPA &le; 1.75 &nbsp;|&nbsp; Passed: GPA &le; 3.00 &nbsp;|&nbsp;
+      Failed: GPA &gt; 3.00 or any failing subject
+    </p>
+  </section>
+
+  <script>
+  "use strict";
+
+  // ============================================================
+  //  COMPUTATION ENGINE  (ported from grading_system.js / Python)
+  // ============================================================
+
+  const GRADE_SCALE = [
+    { low: 97, high: 100, gpa: 1.00, letter: "A+" },
+    { low: 93, high:  96, gpa: 1.25, letter: "A"  },
+    { low: 89, high:  92, gpa: 1.50, letter: "A-" },
+    { low: 85, high:  88, gpa: 1.75, letter: "B+" },
+    { low: 81, high:  84, gpa: 2.00, letter: "B"  },
+    { low: 77, high:  80, gpa: 2.25, letter: "B-" },
+    { low: 73, high:  76, gpa: 2.50, letter: "C+" },
+    { low: 69, high:  72, gpa: 2.75, letter: "C"  },
+    { low: 65, high:  68, gpa: 3.00, letter: "D"  },
+    { low:  0, high:  64, gpa: 5.00, letter: "F"  },
+  ];
+
+  const HONORS_THRESHOLD = 1.75;
+  const PASSED_THRESHOLD = 3.00;
+
+  function round2(n) { return Math.round(n * 100)   / 100;   }
+  function round4(n) { return Math.round(n * 10000) / 10000; }
+
+  function getGpaAndLetter(numericGrade) {
+    for (const row of GRADE_SCALE) {
+      if (numericGrade >= row.low && numericGrade <= row.high) {
+        return { gpa: row.gpa, letter: row.letter };
+      }
+    }
+    return { gpa: 5.00, letter: "F" };
+  }
+
+  function gpaToNumeric(gpa) {
+    const reverseMap = {
+      1.00: 98.5, 1.25: 94.5, 1.50: 90.5, 1.75: 86.5,
+      2.00: 82.5, 2.25: 78.5, 2.50: 74.5, 2.75: 70.5,
+      3.00: 66.5, 5.00: 32.0,
+    };
+    const keys    = Object.keys(reverseMap).map(Number);
+    const closest = keys.reduce((a, b) =>
+      Math.abs(a - gpa) <= Math.abs(b - gpa) ? a : b
+    );
+    return reverseMap[closest];
+  }
+
+  function computeWeightedAverage(subjects) {
+    let totalUnits       = 0;
+    let totalQualityPts  = 0;
+    let hasFailingSubject = false;
+    const subjectResults = [];
+
+    for (const subj of subjects) {
+      const name     = subj.name.trim();
+      const units    = parseFloat(subj.units);
+      const grade    = Math.min(100, Math.max(0, parseFloat(subj.grade)));
+      const { gpa: gpaPoint, letter } = getGpaAndLetter(grade);
+      const qualityPts = round4(gpaPoint * units);
+
+      totalUnits      += units;
+      totalQualityPts += qualityPts;
+      if (gpaPoint === 5.00) hasFailingSubject = true;
+
+      subjectResults.push({
+        name,
+        units,
+        numeric_grade: round2(grade),
+        gpa_point    : gpaPoint,
+        letter_grade : letter,
+        quality_pts  : qualityPts,
+      });
+    }
+
+    const overallGpa = totalUnits === 0
+      ? 5.00
+      : round4(totalQualityPts / totalUnits);
+
+    const { letter: overallLetter } = getGpaAndLetter(gpaToNumeric(overallGpa));
+
+    const standing =
+      (hasFailingSubject || overallGpa > PASSED_THRESHOLD) ? "FAILED" :
+      overallGpa <= HONORS_THRESHOLD                        ? "HONORS" :
+                                                              "PASSED";
+
+    return {
+      subjects         : subjectResults,
+      total_units      : totalUnits,
+      total_quality_pts: round4(totalQualityPts),
+      overall_gpa      : overallGpa,
+      overall_letter   : overallLetter,
+      standing,
+    };
+  }
+
+  // ============================================================
+  //  GUI — SUBJECT ROW MANAGEMENT
+  // ============================================================
+
+  let rowCount = 0;
+
+  function addSubjectRow(name = "", units = "", grade = "") {
+    rowCount++;
+    const tbody = document.getElementById("subjectBody");
+    const tr    = document.createElement("tr");
+    tr.id = "row-" + rowCount;
+
+    tr.innerHTML = `
+      <td class="col-no">${rowCount}</td>
+      <td class="col-name">
+        <input type="text"   placeholder="Subject name"
+               id="name-${rowCount}"  value="${escAttr(name)}" />
+      </td>
+      <td class="col-units">
+        <input type="number" placeholder="e.g. 3"
+               id="units-${rowCount}" value="${escAttr(units)}" min="0.5" step="0.5" />
+      </td>
+      <td class="col-grade">
+        <input type="number" placeholder="0 – 100"
+               id="grade-${rowCount}" value="${escAttr(grade)}" min="0" max="100" step="0.01" />
+      </td>
+      <td class="col-del">
+        <button class="danger" onclick="removeRow(${rowCount})" title="Remove">&times;</button>
+      </td>
+    `;
+
+    tbody.appendChild(tr);
+    document.getElementById("subjectError").style.display = "none";
+  }
+
+  function removeRow(id) {
+    const row = document.getElementById("row-" + id);
+    if (row) row.remove();
+    renumberRows();
+  }
+
+  function renumberRows() {
+    const rows = document.querySelectorAll("#subjectBody tr");
+    rows.forEach((tr, i) => {
+      tr.querySelector(".col-no").textContent = i + 1;
+    });
+  }
+
+  // ============================================================
+  //  GUI — FORM COLLECTION AND VALIDATION
+  // ============================================================
+
+  function collectInputs() {
+    const studentName = document.getElementById("studentName").value.trim();
+    const schoolYear  = document.getElementById("schoolYear").value.trim();
+    const semester    = document.getElementById("semester").value.trim();
+
+    if (!studentName || !schoolYear || !semester) {
+      showError("formError");
+      return null;
+    }
+    hideError("formError");
+
+    const rows = document.querySelectorAll("#subjectBody tr");
+    if (rows.length === 0) {
+      showError("subjectError");
+      return null;
+    }
+
+    const subjects = [];
+    let valid = true;
+
+    rows.forEach(tr => {
+      const id    = tr.id.split("-")[1];
+      const name  = document.getElementById("name-"  + id).value.trim();
+      const units = document.getElementById("units-" + id).value.trim();
+      const grade = document.getElementById("grade-" + id).value.trim();
+
+      if (!name || !units || !grade) { valid = false; return; }
+
+      const u = parseFloat(units);
+      const g = parseFloat(grade);
+      if (isNaN(u) || u <= 0 || isNaN(g) || g < 0 || g > 100) { valid = false; return; }
+
+      subjects.push({ name, units: u, grade: g });
+    });
+
+    if (!valid || subjects.length === 0) {
+      showError("formError");
+      document.getElementById("formError").textContent =
+        "Please fill in all subject fields correctly (units > 0, grade 0-100).";
+      return null;
+    }
+
+    return { studentName, schoolYear, semester, subjects };
+  }
+
+  // ============================================================
+  //  GUI — COMPUTE AND RENDER
+  // ============================================================
+
+  // Stored last result for JSON download
+  let lastPayload = null;
+
+  function compute() {
+    const inputs = collectInputs();
+    if (!inputs) return;
+
+    const { studentName, schoolYear, semester, subjects } = inputs;
+    const results = computeWeightedAverage(subjects);
+
+    lastPayload = { student_name: studentName, school_year: schoolYear, semester, results };
+
+    renderReport(studentName, schoolYear, semester, results);
+
+    document.getElementById("report-section").style.display = "block";
+    document.getElementById("report-section").scrollIntoView({ behavior: "smooth" });
+  }
+
+  function renderReport(studentName, schoolYear, semester, results) {
+    const L    = 56;
+    const bar  = "=".repeat(L);
+    const dash = "-".repeat(L);
+
+    // Build the same plain-text layout as the Python/Node console output
+    let lines = [];
+    lines.push(bar);
+    lines.push("              GRADE COMPUTATION REPORT");
+    lines.push(bar);
+    lines.push("  Student  : " + studentName);
+    lines.push("  Year     : " + schoolYear + "    Semester: " + semester);
+    lines.push(dash);
+    lines.push(
+      "  " + "Subject".padEnd(26) +
+      "Units".padStart(5)  + "  " +
+      "Grade".padStart(5)  + "  " +
+      "GPA".padStart(5)    + "  " +
+      "LG".padStart(3)
+    );
+    lines.push(dash);
+
+    for (const s of results.subjects) {
+      lines.push(
+        "  " + s.name.padEnd(26) +
+        s.units.toFixed(1).padStart(5)         + "  " +
+        s.numeric_grade.toFixed(1).padStart(5) + "  " +
+        s.gpa_point.toFixed(2).padStart(5)     + "  " +
+        s.letter_grade.padStart(3)
+      );
+    }
+
+    lines.push(dash);
+    lines.push("  " + "TOTAL UNITS".padEnd(26)        + results.total_units.toFixed(1).padStart(5));
+    lines.push("  " + "TOTAL QUALITY POINTS".padEnd(26) + results.total_quality_pts.toFixed(2).padStart(5));
+    lines.push("  " + "OVERALL GPA".padEnd(26)         + results.overall_gpa.toFixed(2).padStart(5));
+    lines.push("  " + "LETTER GRADE".padEnd(26)        + results.overall_letter.padStart(5));
+    lines.push(bar);
+
+    document.getElementById("reportPre").textContent = lines.join("\n");
+
+    const standingLabels = {
+      HONORS : "HONORS  (Latin Honors — GPA ≤ 1.75)",
+      PASSED : "PASSED",
+      FAILED : "FAILED",
+    };
+    document.getElementById("standingBox").textContent = standingLabels[results.standing] || results.standing;
+
+    const now = new Date().toLocaleString();
+    document.getElementById("reportFooter").textContent =
+      "Printed: " + now + "  |  Engine: JavaScript (GUI Version)";
+  }
+
+  // ============================================================
+  //  GUI — DOWNLOAD JSON  (same format as Python output)
+  // ============================================================
+
+  function downloadJson() {
+    if (!lastPayload) return;
+    const blob = new Blob([JSON.stringify(lastPayload, null, 2)], { type: "application/json" });
+    const a    = document.createElement("a");
+    a.href     = URL.createObjectURL(blob);
+    a.download = "report_data.json";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  // ============================================================
+  //  GUI — PRINT
+  // ============================================================
+
+  function printReport() {
+    window.print();
+  }
+
+  // ============================================================
+  //  GUI — RESET
+  // ============================================================
+
+  function resetForm() {
+    document.getElementById("studentName").value = "";
+    document.getElementById("schoolYear").value  = "";
+    document.getElementById("semester").value    = "";
+    document.getElementById("subjectBody").innerHTML = "";
+    document.getElementById("report-section").style.display = "none";
+    rowCount    = 0;
+    lastPayload = null;
+    hideError("formError");
+    hideError("subjectError");
+    addSubjectRow();   // start with one blank row
+  }
+
+  // ============================================================
+  //  HELPERS
+  // ============================================================
+
+  function showError(id) { document.getElementById(id).style.display = "block"; }
+  function hideError(id) { document.getElementById(id).style.display = "none";  }
+  function escAttr(str)  { return String(str).replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+
+  // ============================================================
+  //  INIT — start with 3 blank subject rows
+  // ============================================================
+
+  addSubjectRow();
+  addSubjectRow();
+  addSubjectRow();
+
+  </script>
+</body>
+</html>

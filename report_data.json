@@ -1,0 +1,30 @@
+{
+  "student_name": "yasmien",
+  "school_year": "3a",
+  "semester": "1st",
+  "results": {
+    "subjects": [
+      {
+        "name": "Mobile programming",
+        "units": 3.0,
+        "numeric_grade": 87.64,
+        "gpa_point": 1.75,
+        "letter_grade": "B+",
+        "quality_pts": 5.25
+      },
+      {
+        "name": "programming language",
+        "units": 3.0,
+        "numeric_grade": 86.34,
+        "gpa_point": 1.75,
+        "letter_grade": "B+",
+        "quality_pts": 5.25
+      }
+    ],
+    "total_units": 6.0,
+    "total_quality_pts": 10.5,
+    "overall_gpa": 1.75,
+    "overall_letter": "B+",
+    "standing": "HONORS"
+  }
+}
