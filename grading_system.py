@@ -48,7 +48,7 @@ def compute_weighted_average(subjects):
     subject_results    = []
     has_failing_subject = False
 
-    for subj in subjects:
+    for subj in subjects:   # Loop through each subject to compute quality points and GPA
         name  = subj["name"].strip()
         units = float(subj["units"])
         grade = float(subj["grade"])
