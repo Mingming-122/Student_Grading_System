@@ -4,18 +4,28 @@
   <meta charset="UTF-8" />
   <title>Student Grading and GPA System</title>
   <style>
-   
+    /* ============================================================
+       Plain, minimal styling — no frameworks
+    ============================================================ */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: "Courier New", Courier, monospace;
       font-size: 14px;
-      background: #fff;
+      background: #23962b;
       color: #111;
       padding: 30px 40px;
       max-width: 820px;
       margin: 0 auto;
     }
+
+    .Container {
+      background: white;
+      padding: 20px 30px;
+      border-radius: 8px;
+    }
+
+    img { display: block; margin: 0 auto; }
 
     h1 { font-size: 17px; text-transform: uppercase; letter-spacing: 2px; }
     h2 { font-size: 12px; font-weight: normal; color: #555; margin-top: 3px; margin-bottom: 20px; }
@@ -24,20 +34,34 @@
     hr.double { border-top: 3px double #111; }
 
     /* ---- Form labels + inputs ---- */
-    .field-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
-    .field       { display: flex; align-items: center; gap: 10px; }
-    .field label { width: 130px; flex-shrink: 0; font-weight: bold; }
+    .field-group { 
+      display: flex; 
+      flex-direction: column; 
+      gap: 10px; margin-bottom: 16px; }
+
+    .field       { 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; }
+
+    .field label { 
+      width: 130px; 
+      flex-shrink: 0; 
+      font-weight: bold; }
+
     .field input {
       border: 1px solid #aaa;
       padding: 4px 8px;
       font-family: inherit;
       font-size: 13px;
-      width: 260px;
-    }
-    .field input:focus { outline: 2px solid #111; }
+      width: 260px; }
+
+    .field input:focus { 
+      outline: 2px solid #111; }
 
     /* ---- Subjects table ---- */
-    table { width: 100%; border-collapse: collapse; margin: 10px 0; }
+    table { 
+      width: 100%; border-collapse: collapse; margin: 10px 0; }
     thead th {
       text-align: left;
       border-bottom: 1px solid #111;
@@ -136,7 +160,10 @@
          - renderReport()            → builds the plain-text report card
          - downloadJson()            → saves report_data.json to disk
   ============================================================ -->
-
+<div class="Container"  style="text-align:center; margin-bottom:20px">
+  <img src="https://tse1.mm.bing.net/th/id/OIP.DaMwNJfKYJLS_3glSiFXpgHaBW?r=0&rs=1&pid=ImgDetMain&o=7&rm=3" alt="NWSSULogo" style="width:50%; margin-bottom:10px">
+  
+  <hr class="double" />
   <h1>Student Grading and GPA System</h1>
   <h2>JavaScript GUI &mdash; computation identical to the Python and Node.js versions</h2>
   <hr class="double" />
@@ -148,7 +175,7 @@
     <div class="field-group" style="margin-top:10px">
       <div class="field">
         <label for="studentName">Student Name</label>
-        <input id="studentName" type="text" placeholder="e.g. Sino ka man?" />
+        <input id="studentName" type="text" placeholder="e.g. Sino ka jan?" />
       </div>
       <div class="field">
         <label for="schoolYear">School Year</label>
@@ -231,6 +258,7 @@
       Failed: GPA &gt; 3.00 or any failing subject
     </p>
   </section>
+</div>
 
   <script>
   "use strict";
@@ -252,7 +280,7 @@
     { low:  0, high:  64, gpa: 5.00, letter: "F"  },
   ];
 
-  const HONORS_THRESHOLD = 1.75;
+  const DL_THRESHOLD = 1.75;  // Dean's List threshold
   const PASSED_THRESHOLD = 3.00;
 
   function round2(n) { return Math.round(n * 100)   / 100;   }
@@ -315,7 +343,7 @@
 
     const standing =
       (hasFailingSubject || overallGpa > PASSED_THRESHOLD) ? "FAILED" :
-      overallGpa <= HONORS_THRESHOLD                        ? "HONORS" :
+      overallGpa <= DL_THRESHOLD                        ? "DEAN'S LIST" :
                                                               "PASSED";
 
     return {
@@ -489,7 +517,7 @@
     document.getElementById("reportPre").textContent = lines.join("\n");
 
     const standingLabels = {
-      HONORS : "HONORS  (Latin Honors — GPA ≤ 1.75)",
+      DL : "DEAN'S LIST  (Dean's List — GPA ≤ 1.75)",
       PASSED : "PASSED",
       FAILED : "FAILED",
     };
